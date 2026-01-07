@@ -17,10 +17,8 @@
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
-
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -31,49 +29,79 @@ use IEEE.STD_LOGIC_1164.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity testbench is
---  Port ( );
-end testbench;
+ENTITY testbench IS
+    --  Port ( );
+END testbench;
 
-architecture Behavioral of testbench is
-signal clk : std_logic := '0';
---signal rst : std_logic;
-signal wr : std_logic; 
-signal addr : std_logic_vector(15 downto 0);
-signal datawr : std_logic_vector(7 downto 0);
-signal datard : std_logic_vector(7 downto 0);
-signal io_in : std_logic_vector(31 downto 0);
-signal io_out : std_logic_vector(31 downto 0);
-component memory is 
-port (
-clk : in std_logic;
-wr : in std_logic; 
-addr : in std_logic_vector(15 downto 0);
-datawr : in std_logic_vector(7 downto 0);
-datard : out std_logic_vector(7 downto 0);
-io_in : in std_logic_vector(31 downto 0);
-io_out : out std_logic_vector(31 downto 0)
-);
-end component;
+ARCHITECTURE Behavioral OF testbench IS
+    SIGNAL clk : STD_LOGIC := '0';
+    --signal rst : std_logic;
+    SIGNAL wr : STD_LOGIC;
+    SIGNAL addr : STD_LOGIC_VECTOR(15 DOWNTO 0);
+    SIGNAL datawr : STD_LOGIC_VECTOR(7 DOWNTO 0);
+    SIGNAL datard : STD_LOGIC_VECTOR(7 DOWNTO 0);
+    SIGNAL io_in : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    SIGNAL io_out : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    COMPONENT memory IS
+        PORT (
+            clk : IN STD_LOGIC;
+            wr : IN STD_LOGIC;
+            addr : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+            datawr : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+            datard : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+            io_in : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            io_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
+        );
+    END COMPONENT;
 
-begin
-cmem: memory port map(clk,wr,addr,datawr,datard,io_in,io_out);
-clk <= not clk after 500ps;
---rst <= '1','0' after 400ps;
-io_in<=x"1a2b3c4d";
-process begin
-wait for 600ps;
-wr<='1'; addr<=x"0003"; datawr<=x"37"; wait for 1ns; 
-wr<='1'; addr<=x"00fa"; datawr<=x"45"; wait for 1ns; 
-wr<='1'; addr<=x"00fe"; datawr<=x"5c"; wait for 1ns; 
-wr<='1'; addr<=x"0107"; datawr<=x"62"; wait for 1ns; 
-wr<='1'; addr<=x"0214"; datawr<=x"79"; wait for 1ns; 
-wr<='0'; addr<=x"0003"; datawr<=x"83"; wait for 1ns; 
-wr<='0'; addr<=x"00fa"; datawr<=x"83"; wait for 1ns; 
-wr<='0'; addr<=x"00fe"; datawr<=x"83"; wait for 1ns; 
-wr<='0'; addr<=x"0107"; datawr<=x"83"; wait for 1ns; 
-wr<='0'; addr<=x"0214"; datawr<=x"83"; wait for 1ns;
-wait for 1ms;
-end process;
+BEGIN
+    cmem : memory PORT MAP(clk, wr, addr, datawr, datard, io_in, io_out);
+    clk <= NOT clk AFTER 500ps;
+    --rst <= '1','0' after 400ps;
+    io_in <= x"1a2b3c4d";
+    PROCESS BEGIN
+        WAIT FOR 600ps;
+        wr <= '1';
+        addr <= x"0003";
+        datawr <= x"37";
+        WAIT FOR 1ns;
+        wr <= '1';
+        addr <= x"00fa";
+        datawr <= x"45";
+        WAIT FOR 1ns;
+        wr <= '1';
+        addr <= x"00fe";
+        datawr <= x"5c";
+        WAIT FOR 1ns;
+        wr <= '1';
+        addr <= x"0107";
+        datawr <= x"62";
+        WAIT FOR 1ns;
+        wr <= '1';
+        addr <= x"0214";
+        datawr <= x"79";
+        WAIT FOR 1ns;
+        wr <= '0';
+        addr <= x"0003";
+        datawr <= x"83";
+        WAIT FOR 1ns;
+        wr <= '0';
+        addr <= x"00fa";
+        datawr <= x"83";
+        WAIT FOR 1ns;
+        wr <= '0';
+        addr <= x"00fe";
+        datawr <= x"83";
+        WAIT FOR 1ns;
+        wr <= '0';
+        addr <= x"0107";
+        datawr <= x"83";
+        WAIT FOR 1ns;
+        wr <= '0';
+        addr <= x"0214";
+        datawr <= x"83";
+        WAIT FOR 1ns;
+        WAIT FOR 1ms;
+    END PROCESS;
 
-end Behavioral;
+END Behavioral;

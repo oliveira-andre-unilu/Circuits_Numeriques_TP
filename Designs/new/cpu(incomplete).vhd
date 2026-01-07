@@ -61,25 +61,31 @@ BEGIN
     ELSIF clk'event AND clk = '1' THEN
       CASE state IS
 
+        -- State 0: Prepare CPU to read first instruction byte
         WHEN x"0" =>
           -- Init 
-          state <= x"1";
-          pc <= x"0000";
-          addr <= x"0000";
-          wr <= '0';
+          state <= x"1"; -- Sets next State to 1
+          pc <= x"0000"; -- Sets Program Counter to start at 0
+          addr <= x"0000"; -- Sets Memory Read Address to start at 0
+          wr <= '0'; -- Set Memory Write to 0 (Reading instead)
 
+        -- State 1: Fetch 1st byte of instruction
         WHEN x"1" =>
-          ir(23 DOWNTO 16) <= dataRd;
-          pc(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;
-          IF dataRd(7) = '0' OR dataRd(6 DOWNTO 5) = "00"
+          ir(23 DOWNTO 16) <= dataRd;             -- Store the 1st instruction byte in the TOP 8 bits of IR
+                                                  -- IR becomes: [ BYTE1 ][ ???? ][ ???? ]
+                                                  -- The CPU needs this byte first because it contains the opcode (type of instruction).
+          pc(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;   -- Increment Program Counter (so next memory access fetches the next byte)
+          IF dataRd(7) = '0' OR dataRd(6 DOWNTO 5) = "00" -- If instruction starts with '0' or '_ 00'. [Concerned instructions: 00 RRR SSS (MOVE); 1 00 00 RRR (LOAD ind);  1 00 01 RRR (STOR ind)]
             THEN -- transition 1=>4
-            state <= x"4";
+            state <= x"4"; -- Sets next State to 4
+
             -- 02. LOAD INDIRECT
             IF datard(7 DOWNTO 3) = "10000" THEN
               addr(15 DOWNTO 8) <= reg(6);
               addr(7 DOWNTO 0) <= reg(7);
               wr <= '0';
             END IF;
+
             -- 06. STORE INDIRECT
             IF datard(7 DOWNTO 3) = "10001" THEN
               addr(15 DOWNTO 8) <= reg(6);
@@ -87,47 +93,54 @@ BEGIN
               wr <= '1';
               datawr <= reg(to_integer(unsigned(datard(2 DOWNTO 0))));
             END IF;
+
             -- 10. ALU REG
             IF datard(7 DOWNTO 6) = "01" AND datard(5 DOWNTO 3) /= "111" THEN
               aluop1 <= reg(0);
               aluop2 <= reg(to_integer(unsigned(datard(2 DOWNTO 0))));
               alucode <= '0' & datard(5 DOWNTO 3);
             END IF;
+
             -- 11. ALU ONE
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
-            if datard(7 downto 3)="01111" then
+            IF datard(7 DOWNTO 3)="01111" THEN
               aluop1 <= reg(0); 
-              alucode <= '1' & datard(2 downto 0); -- '1' prefix denotes 1-operand [9]
-            end if;
+              alucode <= '1' & datard(2 DOWNTO 0); -- '1' prefix denotes 1-operand [9]
+            END IF;
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
 
           ELSE -- transition 1=>2
-            state <= x"2";
-            addr(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;
+            state <= x"2"; -- Sets next State to 2
+            addr(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1; -- Increment Program Counter (so next memory access fetches the next byte)
 
           END IF;
 
+        -- State 2: Fetch 2nd byte of instruction
         WHEN x"2" =>
-          ir(15 DOWNTO 8) <= dataRd;
-          pc(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;
-          IF ir(22 DOWNTO 21) = "01" OR ir(22 DOWNTO 21) = "10"
+          ir(15 DOWNTO 8) <= dataRd;              -- Store the 2nd instruction byte in the MIDDLE 8 bits of IR
+                                                  -- IR becomes: [ BYTE1 ][ BYTE2 ][ ???? ]
+          pc(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;   -- Increment Program Counter (so next memory access fetches the next byte)
+          IF ir(22 DOWNTO 21) = "01" OR ir(22 DOWNTO 21) = "10"   -- If instruction starts with '_ 01' or '_ 10'. [Concerned instructions:  1 01 00 RRR (LOAD seg);  1 10 00 RRR (LOAD cst);  1 01 01 RRR (STOR seg)]
             THEN -- transition 2=>4
-            state <= x"4";
+            state <= x"4"; -- Sets next State to 4
+
             -- 03. LOAD MIXED
             IF ir(23 DOWNTO 19) = "10100" THEN
               addr(15 DOWNTO 8) <= reg(6);
               addr(7 DOWNTO 0) <= datard;
               wr <= '0';
             END IF;
+
             -- 07. STORE MIXED
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
-            if ir(23 downto 19)="10101" then
-              addr(15 downto 8) <= reg(6); 
-              addr(7 downto 0) <= datard; -- LSB comes from memory bus [10]
+            IF ir(23 DOWNTO 19)="10101" THEN
+              addr(15 DOWNTO 8) <= reg(6); 
+              addr(7 DOWNTO 0) <= datard; -- LSB comes from memory bus [10]
               wr <= '1'; 
-              datawr <= reg(to_integer(unsigned(ir(18 downto 16)))); -- Data from source register [10]
-            end if;
+              datawr <= reg(to_integer(unsigned(ir(18 DOWNTO 16)))); -- Data from source register [10]
+            END IF;
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
+
             -- 09. ALU CONSTANT
             IF ir(23 DOWNTO 19) = "11001" THEN
               aluop1 <= reg(0);
@@ -136,23 +149,26 @@ BEGIN
             END IF;
 
           ELSE -- transition 2=>3
-            state <= x"3";
-            addr(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;
+            state <= x"3"; -- Sets next State to 3
+            addr(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1; -- Increment Program Counter (so next memory access fetches the next byte)
 
           END IF;
 
+        -- State 3: Fetch 3rd byte of instruction
         WHEN x"3" =>
-          ir(7 DOWNTO 0) <= dataRd;
-          pc(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;
+          ir(7 DOWNTO 0) <= dataRd;               -- Store the 3rd instruction byte in the BOTTOM 8 bits of IR
+                                                  -- IR becomes: [ BYTE1 ][ BYTE2 ][ BYTE3 ]
+          pc(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;   -- Increment Program Counter (so next memory access fetches the next byte)
           -- transition 3=> 4
-          state <= x"4";
+          state <= x"4";  -- Sets next State to 4
+
           -- 04. LOAD DIRECT
           -- IMPLEMENTED CODE BY ANDRE AND LEO --
-          if ir(23 downto 19)="11100" then
-            addr(15 downto 8) <= ir(15 downto 8); -- MSB from 2nd byte of IR [12]
-            addr(7 downto 0) <= datard;          -- LSB currently being read [12]
+          IF ir(23 DOWNTO 19)="11100" THEN
+            addr(15 DOWNTO 8) <= ir(15 DOWNTO 8); -- MSB from 2nd byte of IR [12]
+            addr(7 DOWNTO 0) <= datard;          -- LSB currently being read [12]
             wr <= '0';
-          end if;
+          END IF;
           -- IMPLEMENTED CODE BY ANDRE AND LEO --
 
           -- 08. STORE DIRECT
@@ -165,28 +181,34 @@ BEGIN
           end if;
           -- IMPLEMENTED CODE BY ANDRE AND LEO --
 
+        -- State 4: Execute instruction and store result
         WHEN x"4" =>
           -- transition 4=>1
-          state <= x"1";
-          addr <= pc;
-          wr <= '0';
+          state <= x"1";  -- Fetch new instruction
+          addr <= pc;     -- Set Memory Address to next instruction (pointed by PC)
+          wr <= '0';      -- Set Memory Write to 0
+
           -- 01. MOVE
           IF ir(23 DOWNTO 22) = "00" AND ir(21 DOWNTO 19) /= ir(18 DOWNTO 16) THEN
             reg(to_integer(unsigned(ir(18 DOWNTO 16)))) <= reg(to_integer(unsigned(ir(21 DOWNTO 19))));
           END IF;
+
           -- 02,03,04. LOAD INDIRECT, MIXED OR DIRECT
           IF ir(23 DOWNTO 19) = "10000" OR ir(23 DOWNTO 19) = "10100" OR ir(23 DOWNTO 19) = "11100" THEN
             reg(to_integer(unsigned(ir(18 DOWNTO 16)))) <= datard;
           END IF;
+
           -- 05. LOAD CONSTANT
           -- IMPLEMENTED CODE BY ANDRE AND LEO --
-          if ir(23 downto 19)="11000" then
-            reg(to_integer(unsigned(ir(18 downto 16)))) <= ir(15 downto 8); -- Constant is 2nd byte of instruction [14]
-          end if;
+          IF ir(23 DOWNTO 19)="11000" THEN
+            reg(to_integer(unsigned(ir(18 DOWNTO 16)))) <= ir(15 DOWNTO 8); -- Constant is 2nd byte of instruction [14]
+          END IF;
           -- IMPLEMENTED CODE BY ANDRE AND LEO --
+
           -- 12 to 15 JUMP INSTRUCTIONS
           IF ir(23) = '1' AND ir(20 DOWNTO 19) = "11" AND
             (ir(18 DOWNTO 16) = "000" OR reg(1)(to_integer(unsigned(ir(17 DOWNTO 16)))) = ir(18)) THEN
+
             -- JUMP SECRET
             IF ir(22 DOWNTO 21) = "00" THEN
               pc(15 DOWNTO 8) <= reg(6);
@@ -194,27 +216,31 @@ BEGIN
               addr(15 DOWNTO 8) <= reg(6);
               addr(7 DOWNTO 0) <= reg(7);
             END IF;
+
             -- JUMP SHORT ABSOL
             IF ir(22 DOWNTO 21) = "01" THEN
               pc(7 DOWNTO 0) <= ir(15 DOWNTO 8);
               addr(7 DOWNTO 0) <= ir(15 DOWNTO 8);
             END IF;
+
             -- JUMP SHORT REL
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
-            if ir(22 downto 21)="10" then 
-              pc(7 downto 0) <= pc(7 downto 0) + ir(15 downto 8); 
-              addr(7 downto 0) <= pc(7 downto 0) + ir(15 downto 8); 
-            end if;
+            IF ir(22 DOWNTO 21)="10" THEN 
+              pc(7 DOWNTO 0) <= pc(7 DOWNTO 0) + ir(15 DOWNTO 8); 
+              addr(7 DOWNTO 0) <= pc(7 DOWNTO 0) + ir(15 DOWNTO 8); 
+            END IF;
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
+
             -- JUMP LONG ABS
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
-            if ir(22 downto 21)="11" then 
-              pc(15 downto 8) <= ir(15 downto 8); 
-              pc(7 downto 0) <= ir(7 downto 0); 
-              addr(15 downto 8) <= ir(15 downto 8); 
-              addr(7 downto 0) <= ir(7 downto 0); 
-            end if;
+            IF ir(22 DOWNTO 21)="11" THEN 
+              pc(15 DOWNTO 8) <= ir(15 DOWNTO 8); 
+              pc(7 DOWNTO 0) <= ir(7 DOWNTO 0); 
+              addr(15 DOWNTO 8) <= ir(15 DOWNTO 8); 
+              addr(7 DOWNTO 0) <= ir(7 DOWNTO 0); 
+            END IF;
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
+
           END IF;
           -- 9 to 11 ALU INSTRUCTIONS
           IF ir(23 DOWNTO 22) = "01" OR ir(23 DOWNTO 19) = "11001" THEN
@@ -232,9 +258,11 @@ BEGIN
   palu : PROCESS (aluop1, aluop2, alucode)
     VARIABLE vop1, vop2, vres : STD_LOGIC_VECTOR(9 DOWNTO 0);
   BEGIN
+
     vop1 := '0' & aluop1(7) & aluop1;
     vop2 := '0' & aluop2(7) & aluop2;
     vres := vop1;
+
     CASE alucode IS
       -- IMPLEMENTED CODE BY ANDRE AND LEO --
       WHEN "0000" => vres := vop1 + vop2; -- ADD [18]
@@ -261,13 +289,16 @@ BEGIN
         vres(7) := '0';
       WHEN OTHERS => vres := vop1;
     END CASE;
+
     alures <= vres(7 DOWNTO 0);
     aluflags(0) <= vres(9);
+
     IF vres(7 DOWNTO 0) = x"00" THEN
       aluflags(1) <= '1';
     ELSE
       aluflags(1) <= '0';
     END IF;
+
     -- IMPLEMENTED CODE BY ANDRE AND LEO --
     -- Negative flag (SIGN): bit 7 of the result [19, 20]
     aluflags(2) <= vres(7);

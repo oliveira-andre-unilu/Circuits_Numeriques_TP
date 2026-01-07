@@ -1,8 +1,6 @@
 -- TODO: Do undone instructions
 -- TODO: Have good understandable comments
 -- TODO: Format
-
-
 ----------------------------------------------------------------------------------
 -- Company: 
 -- Engineer: 
@@ -22,12 +20,10 @@
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
-
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
-use IEEE.std_logic_unsigned.ALL;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+USE IEEE.std_logic_unsigned.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -38,180 +34,246 @@ use IEEE.std_logic_unsigned.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity cpu is
-Port (
-clk,rst : in std_logic; 
-wr : out std_logic; 
-addr : out std_logic_vector(15 downto 0);
-datawr : out std_logic_vector(7 downto 0);
-datard : in std_logic_vector(7 downto 0)
-);
-end cpu;
+ENTITY cpu IS
+  PORT (
+    clk, rst : IN STD_LOGIC;
+    wr : OUT STD_LOGIC;
+    addr : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    datawr : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    datard : IN STD_LOGIC_VECTOR(7 DOWNTO 0)
+  );
+END cpu;
 
-architecture Behavioral of cpu is
-signal state : std_logic_vector(3 downto 0);
-signal pc : std_logic_vector(15 downto 0);
-signal ir : std_logic_vector(23 downto 0);
-type regtype is array(0 to 7) of std_logic_vector(7 downto 0);   
-signal reg : regtype;
-signal aluop1,aluop2,alures : std_logic_vector(7 downto 0);
-signal alucode,aluflags : std_logic_vector(3 downto 0);
+ARCHITECTURE Behavioral OF cpu IS
+  SIGNAL state : STD_LOGIC_VECTOR(3 DOWNTO 0);
+  SIGNAL pc : STD_LOGIC_VECTOR(15 DOWNTO 0);
+  SIGNAL ir : STD_LOGIC_VECTOR(23 DOWNTO 0);
+  TYPE regtype IS ARRAY(0 TO 7) OF STD_LOGIC_VECTOR(7 DOWNTO 0);
+  SIGNAL reg : regtype;
+  SIGNAL aluop1, aluop2, alures : STD_LOGIC_VECTOR(7 DOWNTO 0);
+  SIGNAL alucode, aluflags : STD_LOGIC_VECTOR(3 DOWNTO 0);
 
-begin
+BEGIN
 
-pseq:process(clk,rst) begin
-if rst='1' then state<=x"0"; 
-elsif clk'event and clk='1' then
-case state is  
+  pseq : PROCESS (clk, rst) BEGIN
+    IF rst = '1' THEN
+      state <= x"0";
+    ELSIF clk'event AND clk = '1' THEN
+      CASE state IS
 
-when x"0"=> 
--- Init 
-  state<=x"1"; pc<=x"0000"; 
-  addr<=x"0000"; wr<='0';
+        WHEN x"0" =>
+          -- Init 
+          state <= x"1";
+          pc <= x"0000";
+          addr <= x"0000";
+          wr <= '0';
 
-when x"1"=>
-  ir(23 downto 16)<=dataRd;
-  pc(7 downto 0)<=pc(7 downto 0)+1;
-if dataRd(7)='0' or dataRd(6 downto 5)="00" 
-then -- transition 1=>4
-  state<=x"4"; 
-  -- 02. LOAD INDIRECT
-  if datard(7 downto 3)="10000" then
-   addr(15 downto 8) <= reg(6); addr(7 downto 0) <= reg(7); wr <='0';
-  end if;
-  -- 06. STORE INDIRECT
-  if datard(7 downto 3)="10001" then
-   addr(15 downto 8) <= reg(6); addr(7 downto 0) <= reg(7); wr <='1'; 
-   datawr <= reg(to_integer(unsigned(datard(2 downto 0))));
-  end if;
-  -- 10. ALU REG
-  if datard(7 downto 6)="01" and datard(5 downto 3)/="111" then
-   aluop1<=reg(0); aluop2<=reg(to_integer(unsigned(datard(2 downto 0)))); alucode<='0'&datard(5 downto 3); 
-  end if;
-  -- 11. ALU ONE
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-  
-else -- transition 1=>2
-  state<=x"2"; 
-  addr(7 downto 0)<=pc(7 downto 0)+1;
-  
-end if;
+        WHEN x"1" =>
+          ir(23 DOWNTO 16) <= dataRd;
+          pc(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;
+          IF dataRd(7) = '0' OR dataRd(6 DOWNTO 5) = "00"
+            THEN -- transition 1=>4
+            state <= x"4";
+            -- 02. LOAD INDIRECT
+            IF datard(7 DOWNTO 3) = "10000" THEN
+              addr(15 DOWNTO 8) <= reg(6);
+              addr(7 DOWNTO 0) <= reg(7);
+              wr <= '0';
+            END IF;
+            -- 06. STORE INDIRECT
+            IF datard(7 DOWNTO 3) = "10001" THEN
+              addr(15 DOWNTO 8) <= reg(6);
+              addr(7 DOWNTO 0) <= reg(7);
+              wr <= '1';
+              datawr <= reg(to_integer(unsigned(datard(2 DOWNTO 0))));
+            END IF;
+            -- 10. ALU REG
+            IF datard(7 DOWNTO 6) = "01" AND datard(5 DOWNTO 3) /= "111" THEN
+              aluop1 <= reg(0);
+              aluop2 <= reg(to_integer(unsigned(datard(2 DOWNTO 0))));
+              alucode <= '0' & datard(5 DOWNTO 3);
+            END IF;
+            -- 11. ALU ONE
+            -- IMPLEMENTED CODE BY ANDRE AND LEO --
+            if datard(7 downto 3)="01111" then
+              aluop1 <= reg(0); 
+              alucode <= '1' & datard(2 downto 0); -- '1' prefix denotes 1-operand [9]
+            end if;
+            -- IMPLEMENTED CODE BY ANDRE AND LEO --
 
-when x"2" =>
-  ir(15 downto 8)<=dataRd;
-  pc(7 downto 0)<=pc(7 downto 0)+1;
-if ir(22 downto 21)="01" or ir(22 downto 21)="10"
-then -- transition 2=>4
-  state<=x"4"; 
-  -- 03. LOAD MIXED
-  if ir(23 downto 19)="10100" then
-    addr(15 downto 8) <= reg(6); addr(7 downto 0) <= datard; wr <='0';
-  end if;
-  -- 07. STORE MIXED
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-  -- 09. ALU CONSTANT
-  if ir(23 downto 19)="11001" then
-    aluop1<=reg(0); aluop2<=datard; alucode<='0'&ir(18 downto 16);
-  end if;
-  
-else -- transition 2=>3
-  state<=x"3"; 
-  addr(7 downto 0)<=pc(7 downto 0)+1;
-  
-end if;
+          ELSE -- transition 1=>2
+            state <= x"2";
+            addr(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;
 
-when x"3" =>
-  ir(7 downto 0)<=dataRd;
-  pc(7 downto 0)<=pc(7 downto 0)+1;
--- transition 3=> 4
-  state<=x"4"; 
-  -- 04. LOAD DIRECT
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-  -- 08. STORE DIRECT
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-  
-when x"4" =>
--- transition 4=>1
-  state<=x"1";
-  addr<=pc;
-  wr<='0';
-  -- 01. MOVE
-  if ir(23 downto 22)="00" and ir(21 downto 19)/=ir(18 downto 16) then
-    reg(to_integer(unsigned(ir(18 downto 16)))) <= reg(to_integer(unsigned(ir(21 downto 19))));
-  end if;
-  -- 02,03,04. LOAD INDIRECT, MIXED OR DIRECT
-  if ir(23 downto 19)="10000" or ir(23 downto 19)="10100" or ir(23 downto 19)="11100" then
-    reg(to_integer(unsigned(ir(18 downto 16)))) <= datard;
-  end if;
-  -- 05. LOAD CONSTANT
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-  -- 12 to 15 JUMP INSTRUCTIONS
-  if ir(23)='1' and ir(20 downto 19)="11" and 
-    (ir(18 downto 16)="000" or reg(1)(to_integer(unsigned(ir(17 downto 16))))=ir(18)) then
-    -- JUMP SECRET
-    if ir(22 downto 21)="00" then pc(15 downto 8)<=reg(6); pc(7 downto 0)<=reg(7);
-      addr(15 downto 8)<=reg(6); addr(7 downto 0)<=reg(7); end if;
-    -- JUMP SHORT ABSOL
-    if ir(22 downto 21)="01" then pc(7 downto 0)<=ir(15 downto 8);
-      addr(7 downto 0)<=ir(15 downto 8); end if;
-    -- JUMP SHORT REL
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-    -- JUMP LONG ABS
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-  end if;   
-  -- 9 to 11 ALU INSTRUCTIONS
-  if ir(23 downto 22)="01" or ir(23 downto 19)="11001" then
-    if alucode/="0010" then reg(0)<=alures; end if;
-    reg(1)(3 downto 0)<=aluflags;
-  end if; 
- 
-when others=>null;
-end case; end if; end process;
+          END IF;
 
-palu:process (aluop1, aluop2, alucode) 
-variable vop1, vop2, vres : std_logic_vector(9 downto 0);
-begin
-vop1:='0'&aluop1(7)&aluop1; vop2:='0'&aluop2(7)&aluop2;
-vres:=vop1;
-case alucode is
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-when "0100" => vres:=vop1 and vop2;
-when "0101" => vres:=vop1 or vop2;
-when "0110" => vres:=vop1 xor vop2;
-when "0111" => vres:=vop1; -- impossible
-when "1000" => vres:=0-vop1;
-when "1001" => vres:=not vop1;
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-when "1100" => vres(7 downto 1):=vop1(6 downto 0); vres(0):=vop1(7);
-when "1101" => vres(6 downto 0):=vop1(7 downto 1); vres(7):=vop1(0);
-when "1110" => vres(7 downto 1):=vop1(6 downto 0); vres(0):='0';
-when "1111" => vres(6 downto 0):=vop1(7 downto 1); vres(7):='0';
-when others => vres:=vop1;
-end case;
-alures <= vres(7 downto 0);
-aluflags(0) <= vres(9);
-if vres(7 downto 0) = x"00" then aluflags(1)<='1'; else aluflags(1)<='0'; end if;
-----------------------------------------------------------------------------------
-----------------------------------------------------------------------------------
-end process;
+        WHEN x"2" =>
+          ir(15 DOWNTO 8) <= dataRd;
+          pc(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;
+          IF ir(22 DOWNTO 21) = "01" OR ir(22 DOWNTO 21) = "10"
+            THEN -- transition 2=>4
+            state <= x"4";
+            -- 03. LOAD MIXED
+            IF ir(23 DOWNTO 19) = "10100" THEN
+              addr(15 DOWNTO 8) <= reg(6);
+              addr(7 DOWNTO 0) <= datard;
+              wr <= '0';
+            END IF;
+            -- 07. STORE MIXED
+            -- IMPLEMENTED CODE BY ANDRE AND LEO --
+            if ir(23 downto 19)="10101" then
+              addr(15 downto 8) <= reg(6); 
+              addr(7 downto 0) <= datard; -- LSB comes from memory bus [10]
+              wr <= '1'; 
+              datawr <= reg(to_integer(unsigned(ir(18 downto 16)))); -- Data from source register [10]
+            end if;
+            -- IMPLEMENTED CODE BY ANDRE AND LEO --
+            -- 09. ALU CONSTANT
+            IF ir(23 DOWNTO 19) = "11001" THEN
+              aluop1 <= reg(0);
+              aluop2 <= datard;
+              alucode <= '0' & ir(18 DOWNTO 16);
+            END IF;
 
+          ELSE -- transition 2=>3
+            state <= x"3";
+            addr(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;
 
-end Behavioral;
+          END IF;
+
+        WHEN x"3" =>
+          ir(7 DOWNTO 0) <= dataRd;
+          pc(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;
+          -- transition 3=> 4
+          state <= x"4";
+          -- 04. LOAD DIRECT
+          -- IMPLEMENTED CODE BY ANDRE AND LEO --
+          if ir(23 downto 19)="11100" then
+            addr(15 downto 8) <= ir(15 downto 8); -- MSB from 2nd byte of IR [12]
+            addr(7 downto 0) <= datard;          -- LSB currently being read [12]
+            wr <= '0';
+          end if;
+          -- IMPLEMENTED CODE BY ANDRE AND LEO --
+
+          -- 08. STORE DIRECT
+          -- IMPLEMENTED CODE BY ANDRE AND LEO --
+          if ir(23 downto 19)="11101" then
+            addr(15 downto 8) <= ir(15 downto 8); 
+            addr(7 downto 0) <= datard; 
+            wr <= '1';
+            datawr <= reg(to_integer(unsigned(ir(18 downto 16)))); -- Data from source register [13]
+          end if;
+          -- IMPLEMENTED CODE BY ANDRE AND LEO --
+
+        WHEN x"4" =>
+          -- transition 4=>1
+          state <= x"1";
+          addr <= pc;
+          wr <= '0';
+          -- 01. MOVE
+          IF ir(23 DOWNTO 22) = "00" AND ir(21 DOWNTO 19) /= ir(18 DOWNTO 16) THEN
+            reg(to_integer(unsigned(ir(18 DOWNTO 16)))) <= reg(to_integer(unsigned(ir(21 DOWNTO 19))));
+          END IF;
+          -- 02,03,04. LOAD INDIRECT, MIXED OR DIRECT
+          IF ir(23 DOWNTO 19) = "10000" OR ir(23 DOWNTO 19) = "10100" OR ir(23 DOWNTO 19) = "11100" THEN
+            reg(to_integer(unsigned(ir(18 DOWNTO 16)))) <= datard;
+          END IF;
+          -- 05. LOAD CONSTANT
+          -- IMPLEMENTED CODE BY ANDRE AND LEO --
+          if ir(23 downto 19)="11000" then
+            reg(to_integer(unsigned(ir(18 downto 16)))) <= ir(15 downto 8); -- Constant is 2nd byte of instruction [14]
+          end if;
+          -- IMPLEMENTED CODE BY ANDRE AND LEO --
+          -- 12 to 15 JUMP INSTRUCTIONS
+          IF ir(23) = '1' AND ir(20 DOWNTO 19) = "11" AND
+            (ir(18 DOWNTO 16) = "000" OR reg(1)(to_integer(unsigned(ir(17 DOWNTO 16)))) = ir(18)) THEN
+            -- JUMP SECRET
+            IF ir(22 DOWNTO 21) = "00" THEN
+              pc(15 DOWNTO 8) <= reg(6);
+              pc(7 DOWNTO 0) <= reg(7);
+              addr(15 DOWNTO 8) <= reg(6);
+              addr(7 DOWNTO 0) <= reg(7);
+            END IF;
+            -- JUMP SHORT ABSOL
+            IF ir(22 DOWNTO 21) = "01" THEN
+              pc(7 DOWNTO 0) <= ir(15 DOWNTO 8);
+              addr(7 DOWNTO 0) <= ir(15 DOWNTO 8);
+            END IF;
+            -- JUMP SHORT REL
+            -- IMPLEMENTED CODE BY ANDRE AND LEO --
+            if ir(22 downto 21)="10" then 
+              pc(7 downto 0) <= pc(7 downto 0) + ir(15 downto 8); 
+              addr(7 downto 0) <= pc(7 downto 0) + ir(15 downto 8); 
+            end if;
+            -- IMPLEMENTED CODE BY ANDRE AND LEO --
+            -- JUMP LONG ABS
+            -- IMPLEMENTED CODE BY ANDRE AND LEO --
+            if ir(22 downto 21)="11" then 
+              pc(15 downto 8) <= ir(15 downto 8); 
+              pc(7 downto 0) <= ir(7 downto 0); 
+              addr(15 downto 8) <= ir(15 downto 8); 
+              addr(7 downto 0) <= ir(7 downto 0); 
+            end if;
+            -- IMPLEMENTED CODE BY ANDRE AND LEO --
+          END IF;
+          -- 9 to 11 ALU INSTRUCTIONS
+          IF ir(23 DOWNTO 22) = "01" OR ir(23 DOWNTO 19) = "11001" THEN
+            IF alucode /= "0010" THEN
+              reg(0) <= alures;
+            END IF;
+            reg(1)(3 DOWNTO 0) <= aluflags;
+          END IF;
+
+        WHEN OTHERS => NULL;
+      END CASE;
+    END IF;
+  END PROCESS;
+
+  palu : PROCESS (aluop1, aluop2, alucode)
+    VARIABLE vop1, vop2, vres : STD_LOGIC_VECTOR(9 DOWNTO 0);
+  BEGIN
+    vop1 := '0' & aluop1(7) & aluop1;
+    vop2 := '0' & aluop2(7) & aluop2;
+    vres := vop1;
+    CASE alucode IS
+      -- IMPLEMENTED CODE BY ANDRE AND LEO --
+      WHEN "0000" => vres := vop1 + vop2; -- ADD [18]
+      WHEN "0001" => vres := vop1 - vop2; -- SUB [18]
+      WHEN "0010" => vres := vop1 - vop2; -- CMP (same as sub, result not saved in pseq) [18]
+      -- IMPLEMENTED CODE BY ANDRE AND LEO --
+      WHEN "0100" => vres := vop1 AND vop2;
+      WHEN "0101" => vres := vop1 OR vop2;
+      WHEN "0110" => vres := vop1 XOR vop2;
+      WHEN "0111" => vres := vop1; -- impossible
+      WHEN "1000" => vres := 0 - vop1;
+      WHEN "1001" => vres := NOT vop1;
+      -- IMPLEMENTED CODE BY ANDRE AND LEO --
+      WHEN "1010" => vres := vop1 + 1;    -- INC [18]
+      WHEN "1011" => vres := vop1 - 1;    -- DEC [18]
+      -- IMPLEMENTED CODE BY ANDRE AND LEO --
+      WHEN "1100" => vres(7 DOWNTO 1) := vop1(6 DOWNTO 0);
+        vres(0) := vop1(7);
+      WHEN "1101" => vres(6 DOWNTO 0) := vop1(7 DOWNTO 1);
+        vres(7) := vop1(0);
+      WHEN "1110" => vres(7 DOWNTO 1) := vop1(6 DOWNTO 0);
+        vres(0) := '0';
+      WHEN "1111" => vres(6 DOWNTO 0) := vop1(7 DOWNTO 1);
+        vres(7) := '0';
+      WHEN OTHERS => vres := vop1;
+    END CASE;
+    alures <= vres(7 DOWNTO 0);
+    aluflags(0) <= vres(9);
+    IF vres(7 DOWNTO 0) = x"00" THEN
+      aluflags(1) <= '1';
+    ELSE
+      aluflags(1) <= '0';
+    END IF;
+    -- IMPLEMENTED CODE BY ANDRE AND LEO --
+    -- Negative flag (SIGN): bit 7 of the result [19, 20]
+    aluflags(2) <= vres(7);
+
+    -- Signed Carry flag: XOR between bit 8 and 7 of the extended result [19, 20]
+    aluflags(3) <= vres(8) xor vres(7);
+    -- IMPLEMENTED CODE BY ANDRE AND LEO --
+  END PROCESS;
+END Behavioral;

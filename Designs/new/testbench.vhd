@@ -20,10 +20,8 @@
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
-
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -34,68 +32,112 @@ use IEEE.STD_LOGIC_1164.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity testbench is
---  Port ( );
-end testbench;
+ENTITY testbench IS
+    --  Port ( );
+END testbench;
 
-architecture Behavioral of testbench is
-signal clk : std_logic := '0';
-signal rst : std_logic;
-signal wr : std_logic; 
-signal addr : std_logic_vector(15 downto 0);
-signal datawr : std_logic_vector(7 downto 0);
-signal datard : std_logic_vector(7 downto 0);
-signal io_in : std_logic_vector(31 downto 0);
-signal io_out : std_logic_vector(31 downto 0);
-component memory is 
-port (
-clk : in std_logic;
-wr : in std_logic; 
-addr : in std_logic_vector(15 downto 0);
-datawr : in std_logic_vector(7 downto 0);
-datard : out std_logic_vector(7 downto 0);
-io_in : in std_logic_vector(31 downto 0);
-io_out : out std_logic_vector(31 downto 0)
-);
-end component;
-component cpu is
-Port (
-clk,rst : in std_logic; 
-wr : out std_logic; 
-addr : out std_logic_vector(15 downto 0);
-datawr : out std_logic_vector(7 downto 0);
-datard : in std_logic_vector(7 downto 0)
-);
-end component;
+ARCHITECTURE Behavioral OF testbench IS
+    SIGNAL clk : STD_LOGIC := '0';
+    SIGNAL rst : STD_LOGIC;
+    SIGNAL wr : STD_LOGIC;
+    SIGNAL addr : STD_LOGIC_VECTOR(15 DOWNTO 0);
+    SIGNAL datawr : STD_LOGIC_VECTOR(7 DOWNTO 0);
+    SIGNAL datard : STD_LOGIC_VECTOR(7 DOWNTO 0);
+    SIGNAL io_in : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    SIGNAL io_out : STD_LOGIC_VECTOR(31 DOWNTO 0);
+    COMPONENT memory IS
+        PORT (
+            clk : IN STD_LOGIC;
+            wr : IN STD_LOGIC;
+            addr : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+            datawr : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+            datard : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+            io_in : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            io_out : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
+        );
+    END COMPONENT;
+    COMPONENT cpu IS
+        PORT (
+            clk, rst : IN STD_LOGIC;
+            wr : OUT STD_LOGIC;
+            addr : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+            datawr : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+            datard : IN STD_LOGIC_VECTOR(7 DOWNTO 0)
+        );
+    END COMPONENT;
 
-begin
-cmem: memory port map(clk,wr,addr,datawr,datard,io_in,io_out);
-ccpu: cpu port map(clk,rst,wr,addr,datawr,datard);
-clk <= not clk after 500ps;
-rst <= '1','0' after 400ps;
-process begin
-io_in<=x"00000000"; wait for 50ns;
-io_in<=x"01000000"; wait for 50ns; io_in<=x"00000000"; wait for 50ns;
-io_in<=x"03000000"; wait for 50ns; io_in<=x"00000000"; wait for 50ns;
-io_in<=x"02000000"; wait for 50ns; io_in<=x"00000000"; wait for 50ns;
-io_in<=x"02000000"; wait for 50ns; io_in<=x"00000000"; wait for 50ns;
-io_in<=x"08000000"; wait for 50ns; io_in<=x"00000000"; wait for 50ns;
-io_in<=x"00000043"; wait for 50ns; 
-io_in<=x"01000043"; wait for 50ns; io_in<=x"00000043"; wait for 50ns;
-io_in<=x"08000043"; wait for 50ns; io_in<=x"00000043"; wait for 50ns;
-io_in<=x"05000043"; wait for 50ns; io_in<=x"00000043"; wait for 50ns;
-io_in<=x"08000043"; wait for 50ns; io_in<=x"00000043"; wait for 50ns;
-io_in<=x"01000043"; wait for 50ns; io_in<=x"00000043"; wait for 50ns;
-io_in<=x"08000043"; wait for 50ns; io_in<=x"00000043"; wait for 50ns;
-io_in<=x"09000043"; wait for 50ns; io_in<=x"00000043"; wait for 50ns;
-wait for 16000ns;
-io_in<=x"00000002"; wait for 50ns; 
-io_in<=x"00000004"; wait for 50ns; 
-io_in<=x"00000009"; wait for 50ns; 
-io_in<=x"00000002"; wait for 50ns; 
-io_in<=x"0000000A"; wait for 50ns; 
-io_in<=x"0000000B"; wait for 50ns; 
+BEGIN
+    cmem : memory PORT MAP(clk, wr, addr, datawr, datard, io_in, io_out);
+    ccpu : cpu PORT MAP(clk, rst, wr, addr, datawr, datard);
+    clk <= NOT clk AFTER 500ps;
+    rst <= '1', '0' AFTER 400ps;
+    PROCESS BEGIN
+        io_in <= x"00000000";
+        WAIT FOR 50ns;
+        io_in <= x"01000000";
+        WAIT FOR 50ns;
+        io_in <= x"00000000";
+        WAIT FOR 50ns;
+        io_in <= x"03000000";
+        WAIT FOR 50ns;
+        io_in <= x"00000000";
+        WAIT FOR 50ns;
+        io_in <= x"02000000";
+        WAIT FOR 50ns;
+        io_in <= x"00000000";
+        WAIT FOR 50ns;
+        io_in <= x"02000000";
+        WAIT FOR 50ns;
+        io_in <= x"00000000";
+        WAIT FOR 50ns;
+        io_in <= x"08000000";
+        WAIT FOR 50ns;
+        io_in <= x"00000000";
+        WAIT FOR 50ns;
+        io_in <= x"00000043";
+        WAIT FOR 50ns;
+        io_in <= x"01000043";
+        WAIT FOR 50ns;
+        io_in <= x"00000043";
+        WAIT FOR 50ns;
+        io_in <= x"08000043";
+        WAIT FOR 50ns;
+        io_in <= x"00000043";
+        WAIT FOR 50ns;
+        io_in <= x"05000043";
+        WAIT FOR 50ns;
+        io_in <= x"00000043";
+        WAIT FOR 50ns;
+        io_in <= x"08000043";
+        WAIT FOR 50ns;
+        io_in <= x"00000043";
+        WAIT FOR 50ns;
+        io_in <= x"01000043";
+        WAIT FOR 50ns;
+        io_in <= x"00000043";
+        WAIT FOR 50ns;
+        io_in <= x"08000043";
+        WAIT FOR 50ns;
+        io_in <= x"00000043";
+        WAIT FOR 50ns;
+        io_in <= x"09000043";
+        WAIT FOR 50ns;
+        io_in <= x"00000043";
+        WAIT FOR 50ns;
+        WAIT FOR 16000ns;
+        io_in <= x"00000002";
+        WAIT FOR 50ns;
+        io_in <= x"00000004";
+        WAIT FOR 50ns;
+        io_in <= x"00000009";
+        WAIT FOR 50ns;
+        io_in <= x"00000002";
+        WAIT FOR 50ns;
+        io_in <= x"0000000A";
+        WAIT FOR 50ns;
+        io_in <= x"0000000B";
+        WAIT FOR 50ns;
 
-wait;
-end process; 
-end Behavioral;
+        WAIT;
+    END PROCESS;
+END Behavioral;

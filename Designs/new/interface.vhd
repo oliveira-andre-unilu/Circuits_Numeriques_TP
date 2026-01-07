@@ -20,13 +20,9 @@
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
-
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.std_logic_unsigned.ALL;
-
-
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.std_logic_unsigned.ALL;
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
 --use IEEE.NUMERIC_STD.ALL;
@@ -36,55 +32,61 @@ use IEEE.std_logic_unsigned.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity interface is
---  Port ( );
-Port (
-  io_in : out std_logic_vector(31 downto 0);
-   -- 31:28 = unused
-   -- 27:24 = buttons
-   -- 23:16 = unused
-   -- 15:0 = switches
-  io_out : in std_logic_vector(31 downto 0);
-   -- 31:24 = disp left bank
-   -- 23:16 = disp right bank
-   -- 15:0 = leds
-  clk : in std_logic; 
-  btnU,btnL,btnR,btnD : in std_logic;
-  sw : in std_logic_vector(15 downto 0);
-  led : out std_logic_vector(15 downto 0);
-  seg : out std_logic_vector(6 downto 0);
-  dp : out std_logic; 
-  an : out std_logic_vector(3 downto 0)
-  );  
-end interface;
+ENTITY interface IS
+  --  Port ( );
+  PORT (
+    io_in : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+    -- 31:28 = unused
+    -- 27:24 = buttons
+    -- 23:16 = unused
+    -- 15:0 = switches
+    io_out : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    -- 31:24 = disp left bank
+    -- 23:16 = disp right bank
+    -- 15:0 = leds
+    clk : IN STD_LOGIC;
+    btnU, btnL, btnR, btnD : IN STD_LOGIC;
+    sw : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    led : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    seg : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);
+    dp : OUT STD_LOGIC;
+    an : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
+  );
+END interface;
 
-architecture Behavioral of interface is
-signal clkdiv : std_logic_vector(15 downto 0);
-signal dispsel : std_logic_vector(3 downto 0);
-signal dpseg : std_logic_vector(7 downto 0);
-begin
--- clock divider
-pdiv: process(clk) begin if rising_edge(clk) then clkdiv<=clkdiv+1; end if; end process;
+ARCHITECTURE Behavioral OF interface IS
+  SIGNAL clkdiv : STD_LOGIC_VECTOR(15 DOWNTO 0);
+  SIGNAL dispsel : STD_LOGIC_VECTOR(3 DOWNTO 0);
+  SIGNAL dpseg : STD_LOGIC_VECTOR(7 DOWNTO 0);
+BEGIN
+  -- clock divider
+  pdiv : PROCESS (clk) BEGIN IF rising_edge(clk) THEN
+    clkdiv <= clkdiv + 1;
+  END IF;
+END PROCESS;
 -- buttons
-pbut: process(clkdiv(15)) begin if rising_edge(clkdiv(15)) then io_in(27 downto 24)<=btnU&btnL&btnR&btnD; end if; end process; 
-io_in(31 downto 28)<=x"0";
-io_in(23 downto 16)<=x"00";
+pbut : PROCESS (clkdiv(15)) BEGIN IF rising_edge(clkdiv(15)) THEN
+  io_in(27 DOWNTO 24) <= btnU & btnL & btnR & btnD;
+END IF;
+END PROCESS;
+io_in(31 DOWNTO 28) <= x"0";
+io_in(23 DOWNTO 16) <= x"00";
 -- switches
-io_in(15 downto 0)<=sw;
+io_in(15 DOWNTO 0) <= sw;
 -- leds
-led<=io_out(15 downto 0);
+led <= io_out(15 DOWNTO 0);
 -- 7seg display
-with clkdiv(15 downto 14) select 
-  dispsel <= io_out(31 downto 28) when "00", io_out(27 downto 24) when "01", io_out(23 downto 20) when "10", io_out(19 downto 16) when "11",
-  x"0" when others;
-with clkdiv(15 downto 14) select
-  an <= x"7" when "00", x"b" when "01", x"d" when "10", x"e" when "11",
-  x"f" when others;
-with dispsel select 
-  dpseg <= x"c0" when x"0", x"f9" when x"1", x"a4" when x"2", x"b0" when x"3", x"99" when x"4", x"92" when x"5", 
-           x"82" when x"6", x"f8" when x"7", x"80" when x"8", x"90" when x"9", x"88" when x"a", x"83" when x"b",
-           x"c6" when x"c", x"a1" when x"d", x"86" when x"e", x"8e" when x"f",
-           x"ff" when others; 
-seg<=dpseg(6 downto 0);
-dp<='1';   
-end Behavioral;
+WITH clkdiv(15 DOWNTO 14) SELECT
+dispsel <= io_out(31 DOWNTO 28) WHEN "00", io_out(27 DOWNTO 24) WHEN "01", io_out(23 DOWNTO 20) WHEN "10", io_out(19 DOWNTO 16) WHEN "11",
+  x"0" WHEN OTHERS;
+WITH clkdiv(15 DOWNTO 14) SELECT
+an <= x"7" WHEN "00", x"b" WHEN "01", x"d" WHEN "10", x"e" WHEN "11",
+  x"f" WHEN OTHERS;
+WITH dispsel SELECT
+  dpseg <= x"c0" WHEN x"0", x"f9" WHEN x"1", x"a4" WHEN x"2", x"b0" WHEN x"3", x"99" WHEN x"4", x"92" WHEN x"5",
+  x"82" WHEN x"6", x"f8" WHEN x"7", x"80" WHEN x"8", x"90" WHEN x"9", x"88" WHEN x"a", x"83" WHEN x"b",
+  x"c6" WHEN x"c", x"a1" WHEN x"d", x"86" WHEN x"e", x"8e" WHEN x"f",
+  x"ff" WHEN OTHERS;
+seg <= dpseg(6 DOWNTO 0);
+dp <= '1';
+END Behavioral;

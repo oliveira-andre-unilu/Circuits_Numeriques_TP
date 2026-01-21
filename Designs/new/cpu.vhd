@@ -23,8 +23,8 @@
 ----------------------------------------------------------------------------------
 -- Simple Microprocessor CPU
 -- Implements a Von Neumann architecture with:
---  - Instruction Fetch (states 0–3)
---  - Execute / Writeback (state 4)
+--  - Instruction Fetch (States 0–3)
+--  - Execute / Writeback (State 4)
 --  - Register file
 --  - ALU
 --  - Jump logic
@@ -94,9 +94,9 @@ BEGIN
   -- - Triggered by clock and reset
   -- - Finite state machine (5 States including Initializer State)
   --    > [STATE 0]: Initialize
-  --    > [STATE 1]: Fetch byte 1
-  --    > [STATE 2]: Fetch byte 2
-  --    > [STATE 3]: Fetch byte 3
+  --    > [STATE 1]: Fetch byte 1 of instruction
+  --    > [STATE 2]: Fetch byte 2 of instruction
+  --    > [STATE 3]: Fetch byte 3 of instruction
   --    > [STATE 4]: Execute
   ------------------------------------------------------------------
   pseq : PROCESS (clk, rst) BEGIN
@@ -139,7 +139,6 @@ BEGIN
           -- |    11 -> 01 111 BBB (ALU 1op (R0));
           -- These instructions only require 1 byte.
           IF dataRd(7) = '0' OR dataRd(6 DOWNTO 5) = "00" THEN
-            -- transition 1=>4 <-------------------------------------------------- I think we can remove this. The next line is self-explanatory.
             state <= x"4"; -- Sets next State to 4 (Execute Instruction)
 
             -- LOAD indirect (Instruction 1)
@@ -172,7 +171,7 @@ BEGIN
             END IF;
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
 
-          ELSE -- transition 1=>2 <-------------------------------------------------- I think we can remove this. The next line is self-explanatory.
+          ELSE 
             -- Instruction needs more bytes
             state <= x"2"; -- Sets next State to 2
             addr(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1; -- Increment Program Counter (so next memory access fetches the next byte)
@@ -193,12 +192,11 @@ BEGIN
           -- If instruction starts with '_ 01' or '_ 10'. 
           -- | Concerned instructions:
           -- |    3 -> 1 01 00 RRR (LOAD seg);
-          -- |    5 -> 1 10 00 RRR (LOAD cst); Passes through (Execution in STATE 4) <-------- Check if this is correct!
+          -- |    5 -> 1 10 00 RRR (LOAD cst); Passes Through (Execution in STATE 4)
           -- |    7 -> 1 01 01 RRR (STOR seg);
           -- |    9 -> 1 10 01 AAA (ALU 2op(R0, DD));
           -- These instructions require 2 bytes.
           IF ir(22 DOWNTO 21) = "01" OR ir(22 DOWNTO 21) = "10" THEN
-            -- transition 2=>4 <-------------------------------------------------- I think we can remove this. The next line is self-explanatory.
             state <= x"4"; -- Sets next State to 4
 
             -- LOAD segmented (LOAD MIXED) (Instruction 3)
@@ -225,7 +223,7 @@ BEGIN
               alucode <= '0' & ir(18 DOWNTO 16);
             END IF;
 
-          ELSE -- transition 2=>3 <-------------------------------------------------- I think we can remove this. The next line is self-explanatory.
+          ELSE
             -- Instruction needs third byte
             state <= x"3"; -- Sets next State to 3
             addr(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1; -- Increment Program Counter (so next memory access fetches the next byte)
@@ -242,7 +240,6 @@ BEGIN
           ir(7 DOWNTO 0) <= dataRd;               -- Store the 3rd instruction byte in the BOTTOM 8 bits of IR
                                                   -- IR becomes: [ BYTE1 ][ BYTE2 ][ BYTE3 ]
           pc(7 DOWNTO 0) <= pc(7 DOWNTO 0) + 1;   -- Increment Program Counter (so next memory access fetches the next byte)
-          -- transition 3=> 4 <-------------------------------------------------- I think we can remove this. The next line is self-explanatory.
           state <= x"4";  -- Sets next State to 4
 
           -- | Concerned instructions:
@@ -360,19 +357,19 @@ BEGIN
     VARIABLE vop1, vop2, vres : STD_LOGIC_VECTOR(9 DOWNTO 0);
   BEGIN
 
-    vop1 := '0' & aluop1(7) & aluop1;
-    vop2 := '0' & aluop2(7) & aluop2;
-    vres := vop1;
+    vop1 := '0' & aluop1(7) & aluop1; -- 10-bit value [Bit 9: unsigned carry placeholder] + [Bit 8: Signed bit (copy of bit 7)] + [Bit 7-0: data]
+    vop2 := '0' & aluop2(7) & aluop2; -- Same as above
+    vres := vop1;                     -- No matching ALU operation (avoid undefined values)
 
     CASE alucode IS
       -- IMPLEMENTED CODE BY ANDRE AND LEO --
       WHEN "0000" => vres := vop1 + vop2;   -- ADD
       WHEN "0001" => vres := vop1 - vop2;   -- SUB
-      WHEN "0010" => vres := vop1 - vop2;   -- CMP (same as sub, result not saved in pseq)
+      WHEN "0010" => vres := vop1 - vop2;   -- CMP (Subtraction in ALU for flags, numeric result not stored in register)
       -- IMPLEMENTED CODE BY ANDRE AND LEO --
-      WHEN "0100" => vres := vop1 AND vop2;
-      WHEN "0101" => vres := vop1 OR vop2;
-      WHEN "0110" => vres := vop1 XOR vop2;
+      WHEN "0100" => vres := vop1 AND vop2; -- AND
+      WHEN "0101" => vres := vop1 OR vop2;  -- OR
+      WHEN "0110" => vres := vop1 XOR vop2; -- XOR
       WHEN "0111" => vres := vop1;          -- Impossible!
       WHEN "1000" => vres := 0 - vop1;      -- NEG
       WHEN "1001" => vres := NOT vop1;      -- NOT
@@ -380,13 +377,13 @@ BEGIN
       WHEN "1010" => vres := vop1 + 1;      -- INC
       WHEN "1011" => vres := vop1 - 1;      -- DEC
       -- IMPLEMENTED CODE BY ANDRE AND LEO --
-      WHEN "1100" => vres(7 DOWNTO 1) := vop1(6 DOWNTO 0);
+      WHEN "1100" => vres(7 DOWNTO 1) := vop1(6 DOWNTO 0);  -- Shift Bits Left (Bit 7 wraps around)
         vres(0) := vop1(7);
-      WHEN "1101" => vres(6 DOWNTO 0) := vop1(7 DOWNTO 1);
+      WHEN "1101" => vres(6 DOWNTO 0) := vop1(7 DOWNTO 1);  -- Shift Bits Right (Bit 0 wraps around)
         vres(7) := vop1(0);
-      WHEN "1110" => vres(7 DOWNTO 1) := vop1(6 DOWNTO 0);
+      WHEN "1110" => vres(7 DOWNTO 1) := vop1(6 DOWNTO 0);  -- Logical Shift Left (Bit 7 is discarded)
         vres(0) := '0';
-      WHEN "1111" => vres(6 DOWNTO 0) := vop1(7 DOWNTO 1);
+      WHEN "1111" => vres(6 DOWNTO 0) := vop1(7 DOWNTO 1);  -- Logical Shift Right (Bit 0 is discarded)
         vres(7) := '0';
       WHEN OTHERS => vres := vop1;
     END CASE;
@@ -401,10 +398,7 @@ BEGIN
     END IF;
 
     -- IMPLEMENTED CODE BY ANDRE AND LEO --
-    -- Negative flag (SIGN): bit 7 of the result [19, 20]
     aluflags(2) <= vres(7);           -- Sign
-
-    -- Signed Carry flag: XOR between bit 8 and 7 of the extended result [19, 20]
     aluflags(3) <= vres(8) XOR vres(7); -- Overflow
     -- IMPLEMENTED CODE BY ANDRE AND LEO --
   END PROCESS;

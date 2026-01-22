@@ -35,7 +35,7 @@ ENTITY top IS
         led : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);    -- 16 LEDs
         
         -- 4x7-segment display
-        seg : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);     -- Segment Control (Segment On/Off)
+        seg : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);     -- Segment Control (Segments On/Off)
         dp : OUT STD_LOGIC;                         -- Decimal Point (Decimal Point On/Off)
         an : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)       -- 7-Segment Display (Which of the 4 7-segment displays)
     );

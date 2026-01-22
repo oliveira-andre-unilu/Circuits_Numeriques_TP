@@ -135,7 +135,7 @@ BEGIN
   --------------------------------------------------------------------------
 
   -- Select which hex digit to display
-  WITH clkdiv(15 DOWNTO 14) SELECT
+  WITH clkdiv(15 DOWNTO 14) SELECT -- Only selecting 2 bits -> will give us 4 possibilities (15 and 14 since they will separate the time by 4)
     dispsel <=
       io_out(31 DOWNTO 28) WHEN "00",  -- digit 0
       io_out(27 DOWNTO 24) WHEN "01",  -- digit 1
@@ -146,10 +146,10 @@ BEGIN
   -- Select which anode is enabled (active-low)
   WITH clkdiv(15 DOWNTO 14) SELECT
     an <=
-      x"7" WHEN "00",  -- enable digit 0
-      x"b" WHEN "01",  -- enable digit 1
-      x"d" WHEN "10",  -- enable digit 2
-      x"e" WHEN "11",  -- enable digit 3
+      x"7" WHEN "00",  -- enable digit 0 -> 0x7 => 0111 (base 2)
+      x"b" WHEN "01",  -- enable digit 1 -> 0xb => 1011 (base 2)
+      x"d" WHEN "10",  -- enable digit 2 -> 0xd => 1101 (base 2)
+      x"e" WHEN "11",  -- enable digit 3 -> 0xe => 1110 (base 2)
       x"f" WHEN OTHERS;
 
   --------------------------------------------------------------------------
@@ -158,16 +158,28 @@ BEGIN
   --------------------------------------------------------------------------
   WITH dispsel SELECT
     dpseg <=
-      x"c0" WHEN x"0", x"f9" WHEN x"1", x"a4" WHEN x"2", x"b0" WHEN x"3",
-      x"99" WHEN x"4", x"92" WHEN x"5", x"82" WHEN x"6", x"f8" WHEN x"7",
-      x"80" WHEN x"8", x"90" WHEN x"9", x"88" WHEN x"a", x"83" WHEN x"b",
-      x"c6" WHEN x"c", x"a1" WHEN x"d", x"86" WHEN x"e", x"8e" WHEN x"f",
-      x"ff" WHEN OTHERS;
+      x"c0" WHEN x"0", -- (1)100 0000
+      x"f9" WHEN x"1", -- (1)111 1001
+      x"a4" WHEN x"2", -- (1)010 0100
+      x"b0" WHEN x"3", -- (1)011 0000
+      x"99" WHEN x"4", -- (1)001 1001
+      x"92" WHEN x"5", -- (1)001 0010
+      x"82" WHEN x"6", -- (1)000 0010
+      x"f8" WHEN x"7", -- (1)111 1000
+      x"80" WHEN x"8", -- (1)000 0000
+      x"90" WHEN x"9", -- (1)001 0000
+      x"88" WHEN x"a", -- (1)000 1000
+      x"83" WHEN x"b", -- (1)000 0011
+      x"c6" WHEN x"c", -- (1)100 0110
+      x"a1" WHEN x"d", -- (1)010 0001
+      x"86" WHEN x"e", -- (1)000 0110
+      x"8e" WHEN x"f", -- (1)000 1110
+      x"ff" WHEN OTHERS; -- (1)111 1111(empty)
 
   --------------------------------------------------------------------------
   -- Drive segment outputs
   --------------------------------------------------------------------------
-  seg <= dpseg(6 DOWNTO 0);  -- segments a–g
+  seg <= dpseg(6 DOWNTO 0);  -- segment value
   dp  <= '1';               -- decimal point always off
 
 END Behavioral;

@@ -1,6 +1,3 @@
--- TODO: Have good understandable comments
--- TODO: Format
-
 ----------------------------------------------------------------------------------
 -- Company: 
 -- Engineer: 

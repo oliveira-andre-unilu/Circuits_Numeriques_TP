@@ -1,5 +1,3 @@
--- TODO: See with Leonardo if everything is understandable
-
 ----------------------------------------------------------------------------------
 -- Company: 
 -- Engineer: 

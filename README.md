@@ -29,19 +29,19 @@ The top-level module (`top.vhd`) integrates these components and exposes the nec
 
 ## Repository Structure
 
-├── README.md
-├── Assets/
-│ ├── Device Architecture Images/
-│ └── bitStreamTPFinalExport.bit
-├── SRC/
-│ ├── cpu.vhd
-│ ├── memory.vhd
-│ ├── interface.vhd
-│ ├── top.vhd
-│ └── top.xdc
-├── tb/
-│ └── testbench.vhd
-├── bios/
-│ └── bios_init.vhd # BIOS program/data initialization
-└── docs/
-  └── report.pdf # Written report with implementation details
+├── README.md  
+├── Assets/  
+│ ├── Device Architecture Images/  
+│ └── bitStreamTPFinalExport.bit  
+├── SRC/  
+│ ├── cpu.vhd  
+│ ├── memory.vhd  
+│ ├── interface.vhd  
+│ ├── top.vhd  
+│ └── top.xdc  
+├── tb/  
+│ └── testbench.vhd  
+├── bios/  
+│ └── bios_init.vhd # BIOS program/data initialization  
+└── docs/  
+  └── report.pdf # Written report with implementation details  

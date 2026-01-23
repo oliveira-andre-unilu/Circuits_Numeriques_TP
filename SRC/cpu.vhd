@@ -167,7 +167,7 @@ BEGIN
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
             IF datard(7 DOWNTO 3)="01111" THEN
               aluop1 <= reg(0); 
-              alucode <= '1' & datard(2 DOWNTO 0); -- '1' prefix denotes 1-operand [9]
+              alucode <= '1' & datard(2 DOWNTO 0);
             END IF;
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
 
@@ -210,9 +210,9 @@ BEGIN
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
             IF ir(23 DOWNTO 19)="10101" THEN
               addr(15 DOWNTO 8) <= reg(6); 
-              addr(7 DOWNTO 0) <= datard; -- LSB comes from memory bus [10]
+              addr(7 DOWNTO 0) <= datard;
               wr <= '1'; 
-              datawr <= reg(to_integer(unsigned(ir(18 DOWNTO 16)))); -- Data from source register [10]
+              datawr <= reg(to_integer(unsigned(ir(18 DOWNTO 16))));
             END IF;
             -- IMPLEMENTED CODE BY ANDRE AND LEO --
 
@@ -250,8 +250,8 @@ BEGIN
           -- LOAD direct (Instruction 4)
           -- IMPLEMENTED CODE BY ANDRE AND LEO --
           IF ir(23 DOWNTO 19)="11100" THEN
-            addr(15 DOWNTO 8) <= ir(15 DOWNTO 8); -- MSB from 2nd byte of IR [12]
-            addr(7 DOWNTO 0) <= datard;          -- LSB currently being read [12]
+            addr(15 DOWNTO 8) <= ir(15 DOWNTO 8);
+            addr(7 DOWNTO 0) <= datard;
             wr <= '0';
           END IF;
           -- IMPLEMENTED CODE BY ANDRE AND LEO --
@@ -262,7 +262,7 @@ BEGIN
             addr(15 DOWNTO 8) <= ir(15 DOWNTO 8); 
             addr(7 DOWNTO 0) <= datard; 
             wr <= '1';
-            datawr <= reg(to_integer(unsigned(ir(18 DOWNTO 16)))); -- Data from source register [13]
+            datawr <= reg(to_integer(unsigned(ir(18 DOWNTO 16))));
           END IF;
           -- IMPLEMENTED CODE BY ANDRE AND LEO --
 
@@ -293,7 +293,7 @@ BEGIN
           -- LOAD constant (Instruction 5)
           -- IMPLEMENTED CODE BY ANDRE AND LEO --
           IF ir(23 DOWNTO 19)="11000" THEN
-            reg(to_integer(unsigned(ir(18 DOWNTO 16)))) <= ir(15 DOWNTO 8); -- Constant is 2nd byte of instruction [14]
+            reg(to_integer(unsigned(ir(18 DOWNTO 16)))) <= ir(15 DOWNTO 8);
           END IF;
           -- IMPLEMENTED CODE BY ANDRE AND LEO --
 
@@ -398,7 +398,7 @@ BEGIN
     END IF;
 
     -- IMPLEMENTED CODE BY ANDRE AND LEO --
-    aluflags(2) <= vres(7);           -- Sign
+    aluflags(2) <= vres(7);             -- Sign
     aluflags(3) <= vres(8) XOR vres(7); -- Overflow
     -- IMPLEMENTED CODE BY ANDRE AND LEO --
   END PROCESS;

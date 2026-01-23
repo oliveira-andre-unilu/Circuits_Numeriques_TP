@@ -39,9 +39,5 @@ The top-level module (`top.vhd`) integrates these components and exposes the nec
 │ ├── interface.vhd  
 │ ├── top.vhd  
 │ └── top.xdc  
-├── tb/  
-│ └── testbench.vhd  
-├── bios/  
-│ └── bios_init.vhd # BIOS program/data initialization  
-└── docs/  
-  └── report.pdf # Written report with implementation details  
+└── TB/  
+  └── testbench.vhd    
